@@ -35,7 +35,7 @@ y = df['Heart Disease']
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
 #B3 Assigning and train model
-rfc_model = RandomForestClassifier(random_state=42)
+rfc_model = RandomForestClassifier(class_weight="balanced", random_state=42)
 rfc_model.fit(X_train, y_train)
 y_pred = rfc_model.predict(X_test)
 
@@ -112,11 +112,12 @@ dump(optimized_model, "heart_disease_predictor.joblib")
 #Best model evaluation metrics
 best_y_pred = optimized_model.predict(X_test)
 best_y_proba = optimized_model.predict_proba(X_test)[:, 1]
+best_y_pred_optimized = (best_y_proba >= 0.4).astype(int) #Adjust threshold to miss fewer patients + for HD
 
 final_metrics = {
-    "Precision": precision_score(y_test, best_y_pred),
-    "Recall": recall_score(y_test, best_y_pred),
-    "F1-Score": f1_score(y_test, best_y_pred),
+    "Precision": precision_score(y_test, best_y_pred_optimized),
+    "Recall": recall_score(y_test, best_y_pred_optimized),
+    "F1-Score": f1_score(y_test, best_y_pred_optimized),
     "AUC ROC": roc_auc_score(y_test, best_y_proba)
 }
 
@@ -167,10 +168,10 @@ plt.show()
 
 #Classification Report
 print("\nClassification Report")
-print(classification_report(y_test, best_y_pred, target_names=["No Disease", "Disease"]))
+print(classification_report(y_test, best_y_pred_optimized, target_names=["No Disease", "Disease"]))
 
 #Confusion Matrix
-cm = confusion_matrix(y_test, best_y_pred)
+cm = confusion_matrix(y_test, best_y_pred_optimized)
 
 cv_cm_display = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=["No HD", "HD"])
 cv_cm_display.plot(cmap="Blues", colorbar=False)
