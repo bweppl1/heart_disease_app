@@ -2,9 +2,10 @@ import pandas as pd
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
+from joblib import dump
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split, RandomizedSearchCV, StratifiedKFold, cross_val_predict, cross_validate
-from sklearn.metrics import precision_score, recall_score, roc_auc_score, f1_score, confusion_matrix, ConfusionMatrixDisplay
+from sklearn.metrics import precision_score, recall_score, roc_auc_score, f1_score, classification_report, confusion_matrix, ConfusionMatrixDisplay
 
 #Read in CSV File
 df = pd.read_csv('data/Heart_Disease_Prediction.csv')
@@ -76,37 +77,6 @@ print("CV Recall: {:.5F}".format(cv_recall))
 print("CV ROC AUC: {:.5F}".format(cv_auc_roc))
 print("CV F1 Score: {:.5F}".format(cv_f1_score))
 
-#Visualize pre vs. post cross validation
-base_metrics = {
-    "Precision": rfc_precision,
-    "Recall": rfc_recall,
-    "F1-Score": rfc_f1_score,
-    "AUC ROC": rfc_auc_roc
-}
-
-cv_metrics = {
-    "Precision": cv_precision,
-    "Recall": cv_recall,
-    "F1-Score": cv_f1_score,
-    "AUC ROC": cv_auc_roc 
-}
-
-#Base Random Forest Classifier bar plot
-plt.figure(figsize=(5,4))
-sns.barplot(data=base_metrics, )
-plt.title("Base Model Performance")
-plt.ylabel("Score")
-plt.ylim(0, 1)
-plt.show()
-
-#CV Metrics bar plot
-plt.figure(figsize=(5,4))
-sns.barplot(data=cv_metrics)
-plt.title("Cross Validation Performance")
-plt.ylabel("Score")
-plt.ylim(0, 1)
-plt.show()
-
 #B6 Hyperparameter Tuning
 #Hyperparameters to sample from
 param_dist = {
@@ -132,5 +102,77 @@ rand_search = RandomizedSearchCV(
 rand_search.fit(X_train, y_train)
 
 #Printing 
-print("Best f1 Score: ", rand_search.best_score_)
+print("\nBest f1 Score: ", rand_search.best_score_)
 print("Best Parameters: ", rand_search.best_params_)
+
+#Save model
+optimized_model = rand_search.best_estimator_
+dump(optimized_model, "heart_disease_predictor.joblib")
+
+#Best model evaluation metrics
+best_y_pred = optimized_model.predict(X_test)
+best_y_proba = optimized_model.predict_proba(X_test)[:, 1]
+
+final_metrics = {
+    "Precision": precision_score(y_test, best_y_pred),
+    "Recall": recall_score(y_test, best_y_pred),
+    "F1-Score": f1_score(y_test, best_y_pred),
+    "AUC ROC": roc_auc_score(y_test, best_y_proba)
+}
+
+#Display best model metrics
+print("\nBest Model Metrics")
+for metric, value in final_metrics.items():
+    print(f"{metric}: {value:.5f}")
+
+#Visualize model comparison(Base vs. StratifiedKFold, vs. RandomizedSearchCV)
+base_metrics = {
+    "Precision": rfc_precision,
+    "Recall": rfc_recall,
+    "F1-Score": rfc_f1_score,
+    "AUC ROC": rfc_auc_roc
+}
+
+cv_metrics = {
+    "Precision": cv_precision,
+    "Recall": cv_recall,
+    "F1-Score": cv_f1_score,
+    "AUC ROC": cv_auc_roc 
+}
+
+#Visualizing comparisons and results
+#Base Random Forest Classifier bar plot
+plt.figure(figsize=(5,4))
+sns.barplot(data=base_metrics, )
+plt.title("Base Model Performance")
+plt.ylabel("Score")
+plt.ylim(0, 1)
+plt.show()
+
+#CV Metrics bar plot
+plt.figure(figsize=(5,4))
+sns.barplot(data=cv_metrics)
+plt.title("StratifiedKFold Performance")
+plt.ylabel("Score")
+plt.ylim(0, 1)
+plt.show()
+
+#RandomizedSearchCV bar plot
+plt.figure(figsize=(5,4))
+sns.barplot(data=final_metrics)
+plt.title("RandomizedSearchCV Performance")
+plt.ylabel("Score")
+plt.ylim(0, 1)
+plt.show()
+
+#Classification Report
+print("\nClassification Report")
+print(classification_report(y_test, best_y_pred, target_names=["No Disease", "Disease"]))
+
+#Confusion Matrix
+cm = confusion_matrix(y_test, best_y_pred)
+
+cv_cm_display = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=["No HD", "HD"])
+cv_cm_display.plot(cmap="Blues", colorbar=False)
+plt.title("CV Confusion Matrix")
+plt.show()
