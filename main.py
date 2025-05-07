@@ -1,9 +1,10 @@
 import pandas as pd
 import numpy as np
 import seaborn as sns
+import matplotlib.pyplot as plt
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split, RandomizedSearchCV
-from sklearn.metrics import precision_score, recall_score, roc_auc_score, f1_score
+from sklearn.model_selection import train_test_split, RandomizedSearchCV, StratifiedKFold, cross_val_predict, cross_validate
+from sklearn.metrics import precision_score, recall_score, roc_auc_score, f1_score, confusion_matrix, ConfusionMatrixDisplay
 
 #Read in CSV File
 df = pd.read_csv('data/Heart_Disease_Prediction.csv')
@@ -45,8 +46,32 @@ rfc_recall = recall_score(y_test, y_pred)
 rfc_auc_roc = roc_auc_score(y_test, y_pred)
 
 #Display Base Metrics
-print("Base Model Evaluation Metrics")
+print("\nBase Model Evaluation Metrics")
 print("Precision: {:.5f}".format(rfc_precision))
 print("Recall: {:.5f}".format(rfc_recall))
 print("AUC ROC: {:.5f}".format(rfc_auc_roc))
 print("F1 Score: {:.5f}".format(rfc_model_f1_score))
+
+#B5 Cross-validation
+skf_model = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+
+cv_results = cross_validate(
+    rfc_model,
+    X,
+    y,
+    cv=skf_model,
+    scoring=["precision", "recall", "f1", "roc_auc"]
+)
+
+cv_predictions = cross_val_predict(rfc_model, X, y, cv=skf_model, method='predict')
+
+cv_f1_score = f1_score(y, cv_predictions)
+cv_precision = precision_score(y, cv_predictions)
+cv_recall = recall_score(y, cv_predictions)
+cv_auc_roc = roc_auc_score(y, cv_predictions)
+
+print("\nCross Validation Evaluation Metrics")
+print("CV Precision: {:.5F}".format(cv_precision))
+print("CV Recall: {:.5F}".format(cv_recall))
+print("CV ROC AUC: {:.5F}".format(cv_auc_roc))
+print("CV F1 Score: {:.5F}".format(cv_f1_score))
