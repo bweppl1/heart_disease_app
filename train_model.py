@@ -44,13 +44,11 @@ y_pred = rfc_model.predict(X_test)
 rfc_f1_score = f1_score(y_test, y_pred)
 rfc_precision = precision_score(y_test, y_pred)
 rfc_recall = recall_score(y_test, y_pred)
-rfc_auc_roc = roc_auc_score(y_test, y_pred)
 
 #Display Base Metrics
 print("\nBase Model Evaluation Metrics")
 print("Precision: {:.5f}".format(rfc_precision))
 print("Recall: {:.5f}".format(rfc_recall))
-print("AUC ROC: {:.5f}".format(rfc_auc_roc))
 print("F1 Score: {:.5f}".format(rfc_f1_score))
 
 #B5 Cross-validation
@@ -61,7 +59,7 @@ cv_results = cross_validate(
     X,
     y,
     cv=skf_model,
-    scoring=["precision", "recall", "f1", "roc_auc"]
+    scoring=["precision", "recall", "f1"]
 )
 
 cv_predictions = cross_val_predict(rfc_model, X, y, cv=skf_model, method='predict')
@@ -69,12 +67,10 @@ cv_predictions = cross_val_predict(rfc_model, X, y, cv=skf_model, method='predic
 cv_f1_score = f1_score(y, cv_predictions)
 cv_precision = precision_score(y, cv_predictions)
 cv_recall = recall_score(y, cv_predictions)
-cv_auc_roc = roc_auc_score(y, cv_predictions)
 
 print("\nCross Validation Evaluation Metrics")
 print("CV Precision: {:.5F}".format(cv_precision))
 print("CV Recall: {:.5F}".format(cv_recall))
-print("CV ROC AUC: {:.5F}".format(cv_auc_roc))
 print("CV F1 Score: {:.5F}".format(cv_f1_score))
 
 #B6 Hyperparameter Tuning
@@ -117,8 +113,7 @@ best_y_pred_optimized = (best_y_proba >= 0.4).astype(int) #Adjust threshold to m
 final_metrics = {
     "Precision": precision_score(y_test, best_y_pred_optimized),
     "Recall": recall_score(y_test, best_y_pred_optimized),
-    "F1-Score": f1_score(y_test, best_y_pred_optimized),
-    "AUC ROC": roc_auc_score(y_test, best_y_proba)
+    "F1-Score": f1_score(y_test, best_y_pred_optimized)
 }
 
 #Display best model metrics
@@ -130,15 +125,13 @@ for metric, value in final_metrics.items():
 base_metrics = {
     "Precision": rfc_precision,
     "Recall": rfc_recall,
-    "F1-Score": rfc_f1_score,
-    "AUC ROC": rfc_auc_roc
+    "F1-Score": rfc_f1_score
 }
 
 cv_metrics = {
     "Precision": cv_precision,
     "Recall": cv_recall,
-    "F1-Score": cv_f1_score,
-    "AUC ROC": cv_auc_roc 
+    "F1-Score": cv_f1_score
 }
 
 #Visualizing comparisons and results
@@ -173,7 +166,7 @@ print(classification_report(y_test, best_y_pred_optimized, target_names=["No Dis
 #Confusion Matrix
 cm = confusion_matrix(y_test, best_y_pred_optimized)
 
-cv_cm_display = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=["No HD", "HD"])
+cv_cm_display = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=["No Disease", "Disease"])
 cv_cm_display.plot(cmap="Blues", colorbar=False)
 plt.title("CV Confusion Matrix")
 plt.show()
