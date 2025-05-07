@@ -40,7 +40,7 @@ y_pred = rfc_model.predict(X_test)
 
 #B4 Evaluate model accuracy
 #Evaluation metrics - f1score, precision, recall, auc-roc
-rfc_model_f1_score = f1_score(y_test, y_pred)
+rfc_f1_score = f1_score(y_test, y_pred)
 rfc_precision = precision_score(y_test, y_pred)
 rfc_recall = recall_score(y_test, y_pred)
 rfc_auc_roc = roc_auc_score(y_test, y_pred)
@@ -50,7 +50,7 @@ print("\nBase Model Evaluation Metrics")
 print("Precision: {:.5f}".format(rfc_precision))
 print("Recall: {:.5f}".format(rfc_recall))
 print("AUC ROC: {:.5f}".format(rfc_auc_roc))
-print("F1 Score: {:.5f}".format(rfc_model_f1_score))
+print("F1 Score: {:.5f}".format(rfc_f1_score))
 
 #B5 Cross-validation
 skf_model = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
@@ -75,3 +75,34 @@ print("CV Precision: {:.5F}".format(cv_precision))
 print("CV Recall: {:.5F}".format(cv_recall))
 print("CV ROC AUC: {:.5F}".format(cv_auc_roc))
 print("CV F1 Score: {:.5F}".format(cv_f1_score))
+
+#Visualize pre vs. post cross validation
+base_metrics = {
+    "Precision": rfc_precision,
+    "Recall": rfc_recall,
+    "F1-Score": rfc_f1_score,
+    "AUC ROC": rfc_auc_roc
+}
+
+cv_metrics = {
+    "Precision": cv_precision,
+    "Recall": cv_recall,
+    "F1-Score": cv_f1_score,
+    "AUC ROC": cv_auc_roc 
+}
+
+#Base Random Forest Classifier bar plot
+plt.figure(figsize=(5,4))
+sns.barplot(data=base_metrics, )
+plt.title("Base Model Performance")
+plt.ylabel("Score")
+plt.ylim(0, 1)
+plt.show()
+
+#CV Metrics bar plot
+plt.figure(figsize=(5,4))
+sns.barplot(data=cv_metrics)
+plt.title("Cross Validation Performance")
+plt.ylabel("Score")
+plt.ylim(0, 1)
+plt.show()
