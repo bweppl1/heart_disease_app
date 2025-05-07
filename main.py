@@ -106,3 +106,31 @@ plt.title("Cross Validation Performance")
 plt.ylabel("Score")
 plt.ylim(0, 1)
 plt.show()
+
+#B6 Hyperparameter Tuning
+#Hyperparameters to sample from
+param_dist = {
+    "n_estimators": np.arange(50, 300, 50),
+    "max_depth": [None, 10, 20, 30],
+    "min_samples_split": np.arange(2, 11),
+    "min_samples_leaf": np.arange(1, 5),
+    "bootstrap": [True, False],
+    "class_weight": [None, "balanced"]
+}
+
+#Randomized search on the paramater set
+rand_search = RandomizedSearchCV(
+    estimator=rfc_model,
+    param_distributions=param_dist,
+    n_iter=50,
+    cv=skf_model,
+    scoring="f1",
+    n_jobs=2,
+    random_state=42
+)
+
+rand_search.fit(X_train, y_train)
+
+#Printing 
+print("Best f1 Score: ", rand_search.best_score_)
+print("Best Parameters: ", rand_search.best_params_)
