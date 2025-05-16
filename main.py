@@ -1,91 +1,81 @@
+import streamlit as st
 import pandas as pd
+from sklearn.ensemble import RandomForestClassifier
+
 from dataclasses import dataclass
+
 from joblib import load
 
 # Optimized model
 model = load("heart_disease_predictor.joblib")
 
-@dataclass
-class Patient:
-    age: int
-    sex: int          # 1 = male, 0 = female
-    cp: int           # Chest pain type (1-3)
-    trestbps: int     # Resting blood pressure (mm Hg)
-    chol: int         # Serum cholesterol (mg/dl)
-    fbs: int          # Fasting blood sugar > 120 mg/dl (1 = yes, 0 = no)
-    restecg: int      # Resting ECG results (0-2)
-    thalach: int      # Maximum heart rate achieved
-    exang: int        # Exercise-induced angina (1 = yes, 0 = no)
-    oldpeak: int      # ST depression induced by exercise
-    slope: int        # Slope of peak exercise ST segment (0-2)
-    ca: int           # Number of major vessels (0-3)
-    thal: int         # Thalassemia (3,6,7)
+# Title and description
+st.title("Heart Disease Predictor")
+st.write("Random Forest Classifier Model to Predict Heart Disease")
 
-    def to_dict(self):
-        """Convert Patient object to dictionary for CSV/prediction."""
-        return {
-            'Age': self.age,
-            'Sex': self.sex,
-            'Chest pain type': self.cp,
-            'BP': self.trestbps,
-            'Cholesterol': self.chol,
-            'FBS over 120': self.fbs,
-            'EKG results': self.restecg,
-            'Max HR': self.thalach,
-            'Exercise angina': self.exang,
-            'ST depression': self.oldpeak,
-            'Slope of ST': self.slope,
-            'Number of vessels fluro': self.ca,
-            'Thallium': self.thal
-        }
-def main():
-    print("Welcome to the Unofficial Heart Disease Predictor!")
-    patient = collect_patient_data()
-    save_and_predict(patient)
+with st.form(key='patient_form'):
+    age = st.number_input("Age", min_value=0, max_value=110, value=50)
+    sex = st.selectbox("Sex", ["Male", "Female"], index=0)
+    cp = st.selectbox("Chest Pain Type", ["Typical Angina", "Atypical Angina", "Non-Anginal Pain", "Asymptomatic"], index=0)
+    trestbps = st.number_input("Resting Blood Pressure (mm Hg)", min_value=0, max_value=200, value=120)
+    #check min/max chol values
+    chol = st.number_input("Serum Cholesterol (mg/dl)", min_value=0, max_value=600, value=200)
+    fbs = st.selectbox("Fasting Blood Sugar > 120 mg/dl", ["True", "False"], index=0)
+    restecg = st.selectbox("Resting Electrocardiographic Results", ["Normal", "ST-T Wave Abnormality", "Left Ventricular Hypertrophy"], index=0)
+    thalach = st.number_input("Maximum Heart Rate Achieved", min_value=0, max_value=250, value=150)
+    exang = st.selectbox("Exercise Induced Angina", ["True", "False"], index=0)
+    oldpeak = st.number_input("Oldpeak (depression induced by exercise relative to rest)", min_value=0.0, max_value=10.0, value=1.0)
+    slope = st.selectbox("Slope of the Peak Exercise ST Segment", ["Upsloping", "Flat", "Downsloping"], index=0)
+    ca = st.number_input("Number of Major Vessels Colored by Fluoroscopy", min_value=0, max_value=3, value=0)
+    thal = st.selectbox("Thalassemia", ["Normal", "Fixed Defect", "Reversible Defect"], index=0)
 
-# New patient input UI
-def collect_patient_data():
-    print("\nNEW PATIENT ENTRY")
-    print("=" * 20)
+    submit_button = st.form_submit_button(label='Predict')
+
+    if submit_button:
+        # Convert categorical variables to numerical
+        patient_data = pd.DataFrame({
+            "Age": [age],
+            "Sex": [1 if sex == "Male" else 0],
+            "Chest pain type": [1 if cp == "Typical Angina" else 2 if cp == "Atypical Angina" else 3 if cp == "Non-Anginal Pain" else 4],
+            "BP": [trestbps],
+            "Cholesterol": [chol],
+            "FBS over 120": [1 if fbs == "True" else 0],
+            "EKG results": [0 if restecg == "Normal" else 1 if restecg == "ST-T Wave Abnormality" else 2],
+            "Max HR": [thalach],
+            "Exercise angina": [1 if exang == "True" else 0],
+            "ST depression": [oldpeak],
+            "Slope of ST": [1 if slope == "Upsloping" else 2 if slope == "Flat" else 3],
+            "Number of vessels fluro": [ca],
+            "Thallium": [3 if thal == "Normal" else 6 if thal == "Fixed Defect" else 7]
+        })
     
-    age = int(input("Age: "))
-    sex = int(input("Sex (1 = male, 0 = female): "))
-    cp = int(input("Chest pain type (1 = typical, 2 = atypical, 3 = non-anginal, 4 = asymptomatic): "))
-    trestbps = int(input("Resting blood pressure (mm Hg): "))
-    chol = int(input("Serum cholesterol (mg/dl): "))
-    fbs = int(input("Fasting blood sugar > 120 mg/dl (1 = yes, 0 = no): "))
-    restecg = int(input("Resting ECG results (0-2): "))
-    thalach = int(input("Maximum heart rate achieved: "))
-    exang = int(input("Exercise-induced angina (1 = yes, 0 = no): "))
-    oldpeak = int(input("ST depression induced by exercise(1 = yes, 0 = no): "))
-    slope = int(input("Slope of peak exercise ST segment (1 = upslope, 2 = flat, 3 = downslope): "))
-    ca = int(input("Number of major vessels (0-3): "))
-    thal = int(input("Thalassemia (3-normal,6-fixed defect,7-reversible defect): "))
-    
-    return Patient(age, sex, cp, trestbps, chol, fbs, restecg, thalach, 
-                  exang, oldpeak, slope, ca, thal)
+        # Make prediction
+        prediction = model.predict(patient_data)[0]
+        prediction_proba = model.predict_proba(patient_data)[0]
+        
+        # Convert probabilities to percentage
+        heart_disease_prob = prediction_proba[1]*100
+        no_heart_disease_prob = prediction_proba[0]*100
 
-# New patient info prediction, return as % chance with predict_proba
-def predict_heart_disease(patient):
-    patient_df = pd.DataFrame([patient.to_dict()])
-    proba = model.predict_proba(patient_df)[:, 1]
-    return proba[0]
+        # Display prediction
+        st.write("### Prediction Result")
+        if prediction == 1:
+            st.error("The model predicts that the patient has heart disease.")
+        else:
+            st.success("The model predicts that the patient does not have heart disease.")
+        st.write("### Prediction Probability")
+        st.write(f"Probability of heart disease: {heart_disease_prob:.2f}%")
+        st.write(f"Probability of no heart disease: {no_heart_disease_prob:.2f}%")
 
-# Save and send data for prediction
-def save_and_predict(patient, filename="data/new_patient_data.csv"):
-    try:
-        df = pd.read_csv(filename)
-    except FileNotFoundError:
-        df = pd.DataFrame(columns=patient.to_dict().keys())
-    
-    # Append and save
-    df = pd.concat([df, pd.DataFrame([patient.to_dict()])], ignore_index=True)
-    df.to_csv(filename, index=False)
-    
-    # Predict
-    risk = predict_heart_disease(patient)
-    print(f"\nPredicted heart disease risk: {risk:.1%}")
-    return risk
+# Save patient data to CSV
+def save_patient_data(patient_data):
+    patient_df = pd.DataFrame(patient_data)
+    patient_df.to_csv("data/new_patient_data.csv", mode='a', header=False, index=False)
+    st.success("Patient data saved to CSV file.")
 
-if __name__ == "__main__":
-    main()
+# Save patient data when the form is submitted
+if submit_button:
+    save_patient_data(patient_data)
+
+# Show raw input data
+    st.json(patient_data.to_dict(orient='records'))
