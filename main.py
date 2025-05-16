@@ -1,9 +1,5 @@
 import streamlit as st
 import pandas as pd
-from sklearn.ensemble import RandomForestClassifier
-
-from dataclasses import dataclass
-
 from joblib import load
 
 # Optimized model
