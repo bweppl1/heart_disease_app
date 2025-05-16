@@ -72,7 +72,7 @@ def predict_heart_disease(patient):
     return proba[0]
 
 # Save and send data for prediction
-def save_and_predict(patient, filename="new_patient_data.csv"):
+def save_and_predict(patient, filename="data/new_patient_data.csv"):
     try:
         df = pd.read_csv(filename)
     except FileNotFoundError:
