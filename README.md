@@ -1,11 +1,3 @@
-<strong> **DO NOT DISTRIBUTE OR PUBLICLY POST SOLUTIONS TO THESE LABS. MAKE ALL FORKS OF THIS REPOSITORY WITH SOLUTION CODE PRIVATE. PLEASE REFER TO THE STUDENT CODE OF CONDUCT AND ETHICAL EXPECTATIONS FOR COLLEGE OF INFORMATION TECHNOLOGY STUDENTS FOR SPECIFICS. ** </strong>
-
-# WESTERN GOVERNORS UNIVERSITY
-
-## D683 – ADVANCED AI AND ML
-
-Brent Weppler, Student ID: 012456940
-
 ### Project Overview
 
 This is a ML/AI program to predict the presence of heart disease in patients. The model uses a Random Forest Classifier, optimized with StratifiedKFold and RandomizedSearchCV. Due to the use-case of the model, the algorithm is optimized to minimize false negatives.
@@ -45,7 +37,7 @@ https://heartdiseaseapp-gbjfbr6jmifilrxuk7mcrr.streamlit.app/
 1. Clone the program repository:
 
 ```bash
-git clone https://gitlab.com/wgu-gitlab-environment/student-repos/bweppl1/d683-advanced-ai-and-ml.git
+git clone https://github.com/bweppl1/heart_disease_app.git
 ```
 
 2. Install requirements:
